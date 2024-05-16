@@ -2,7 +2,6 @@ package com.example.ms1.note.notebook;
 
 import com.example.ms1.note.MainService;
 import com.example.ms1.note.note.Note;
-import com.example.ms1.note.note.NoteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,5 +35,25 @@ public class NotebookController {
         Note note = notebook.getNoteList().get(0);
 
         return "redirect:/books/%d/notes/%d".formatted(id, note.getId());
+    }
+    @PostMapping("/books/{id}/delete")
+    public String delete (@PathVariable("id") Long id) {
+        Notebook notebook = this.notebookService.getNotebook(id);
+        this.notebookService.delete(notebook);
+
+        return "redirect:/";
+    }
+    @PostMapping("/books/{id}/move")
+    public String move (@PathVariable("id")Long id, Long destinationId, Long targetNoteId) {
+        this.notebookService.move(id, destinationId);
+
+        return "redirect:/books/%d/notes/%d".formatted(id, targetNoteId);
+    }
+
+    @PostMapping("/books/{id}/update")
+    public String update (@PathVariable("id")Long id, String name, Long targetNoteId) {
+        this.notebookService.update(id, name);
+
+        return "redirect:/books/%d/notes/%d".formatted(id, targetNoteId);
     }
 }

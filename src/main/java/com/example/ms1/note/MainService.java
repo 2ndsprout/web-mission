@@ -3,9 +3,7 @@ package com.example.ms1.note;
 import com.example.ms1.note.note.Note;
 import com.example.ms1.note.note.NoteService;
 import com.example.ms1.note.notebook.Notebook;
-import com.example.ms1.note.notebook.NotebookRepository;
 import com.example.ms1.note.notebook.NotebookService;
-import com.sun.tools.javac.Main;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +17,7 @@ public class MainService {
     private final NoteService noteService;
 
     public MainDataDto getDefaultMainData() {
-        List<Notebook> notebookList = notebookService.getNotebookList();
+        List<Notebook> notebookList = notebookService.getTopNotebookList();
 
         if (notebookList.isEmpty()) {
             Notebook notebook = this.saveDefaultNotebook();

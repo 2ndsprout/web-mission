@@ -1,55 +1,120 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.2/dist/full.min.css" rel="stylesheet" type="text/css"/>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body>
-<div class="bg-yellow-400"
-th:with="notebookList=${mainDataDto.notebookList},
+<html layout:decorate="~{layout}">
+
+<li th:fragment="noteTree(notebookList, targetNotebook)" th:each="notebook : ${notebookList}"
+    th:with="basic='w-[90%] p-[10px]'">
+    <th:block th:if="${!#lists.isEmpty(notebook.children)}">
+        <details open>
+            <summary class="flex p-0">
+                <a th:class="${basic}"
+                   th:classappend="${notebook.id == targetNotebook.id} ? 'bg-blue-600':''"
+                   th:href="@{|/books/${notebook.id}|}"
+                   th:text="${notebook.name}">
+                </a>
+            </summary>
+            <ul>
+                <li th:replace="~{main::noteTree(${notebook.children}, ${targetNotebook})}"></li>
+            </ul>
+        </details>
+    </th:block>
+    <th:block th:if="${#lists.isEmpty(notebook.children)}">
+        <a th:class="${basic}"
+           th:classappend="${notebook.id == targetNotebook.id} ? 'bg-blue-600' : '' "
+           th:href="@{|/books/${notebook.id}|}" th:text="${notebook.name}"></a>
+    </th:block>
+</li>
+
+<li th:fragment="moveTree(notebookList, targetNotebook)" th:each="notebook : ${notebookList}"
+    th:with="basic='w-[90%] p-[10px]'">
+    <th:block th:if="${!#lists.isEmpty(notebook.children)}">
+        <details open th:if="${notebook.id != targetNotebook.id and !#lists.contains(targetNotebook.children, notebook)}">
+            <summary class="flex p-0">
+                <input type="radio" class="radio radio-primary" name="destinationId" th:value="${notebook.id}">
+                <a th:class="${basic}"
+                   th:classappend="${notebook.id == targetNotebook.id} ? 'bg-blue-600':''"
+                   th:href="@{|/books/${notebook.id}|}"
+                   th:text="${notebook.name}">
+                </a>
+            </summary>
+            <ul>
+                <li th:replace="~{main::moveTree(${notebook.children}, ${targetNotebook})}"></li>
+            </ul>
+        </details>
+    </th:block>
+    <th:block th:if="${#lists.isEmpty(notebook.children)}">
+        <div th:if="${notebook.id != targetNotebook.id and !#lists.contains(targetNotebook.children, notebook)}">
+            <input type="radio" class="radio radio-primary" name="destinationId" th:value="${notebook.id}">
+            <a th:class="${basic}"
+               th:classappend="${notebook.id == targetNotebook.id} ? 'bg-blue-600' : '' "
+               th:href="@{|/books/${notebook.id}|}" th:text="${notebook.name}">
+            </a>
+        </div>
+    </th:block>
+</li>
+
+<div layout:fragment="content"
+     th:with="notebookList=${mainDataDto.notebookList},
         noteList=${mainDataDto.noteList},
         targetNotebook=${mainDataDto.targetNotebook},
         targetNote=${mainDataDto.targetNote}">
+
     <div class="bg-blue-300">
         <a href="/">logo</a>
     </div>
-    <div class="bg-red-600 flex">
+
+    <div class="flex">
         <div class="bg-indigo-300 w-[20%]">
             <ul class="menu h-[100%] overflow-scroll">
-                <li th:each="notebook : ${notebookList}"
-                    th:with="basic='w-[90%] p-[10px]'">
-                    <th:block th:if="${!#lists.isEmpty(notebook.children)}">
-                        <details open>
-                            <summary class="flex p-0"><a th:class="${basic}"
-                                                         th:classappend="${notebook.id == targetNotebook.id} ? 'bg-blue-600':''"
-                                                         th:href="@{|/books/${notebook.id}|}"
-                                                         th:text="${notebook.name}"></a></summary>
-                            <ul>
-                                <li th:each="child : ${notebook.children}">
-                                    <a th:class="${basic}"
-                                       th:classappend="${child.id == targetNotebook.id} ? 'bg-blue-600' : '' "
-                                       th:href="@{|/books/${child.id}|}" th:text="${child.name}"></a>
-                                </li>
-                            </ul>
-                        </details>
-                    </th:block>
-                    <th:block th:if="${#lists.isEmpty(notebook.children) and notebook.parent == null}">
-                        <a th:class="${basic}"
-                           th:classappend="${notebook.id == targetNotebook.id} ? 'bg-blue-600' : '' "
-                           th:href="@{|/books/${notebook.id}|}" th:text="${notebook.name}"></a>
-                    </th:block>
-                </li>
+                <li th:replace="main::noteTree(${notebookList}, ${targetNotebook})"></li>
             </ul>
 
             <form th:action="@{|/books/write|}" method="post">
-                <input type="submit" value="추가">
+                <input type="submit" value="추가" class="btn btn-outline">
             </form>
 
             <form th:action="@{|/groups/${targetNotebook.id}/books/write|}" method="post">
-                <input type="submit" value="하위 노트북 추가">
+                <input type="submit" value="하위 노트북 추가" class="btn btn-outline">
             </form>
+            <form th:action="@{|/books/${targetNotebook.id}/delete|}" method="post">
+                <input type="submit" value="삭제" class="btn btn-outline">
+            </form>
+            <button class="btn btn-outline" onclick="my_modal_1.showModal()">노트북 수정</button>
+            <dialog id="my_modal_1" class="modal">
+                <div class="modal-box">
+                    <form th:action="@{|/books/${targetNotebook.id}/update|}" method="post" class="flex flex-col justify-center">
+                        <input type="hidden" name="targetNoteId" th:value="${targetNote.id}">
+                        <input type="text" class="input input-bordered" name="name" th:value="${targetNotebook.name}">
+                        <input type="submit" value="수정" class="btn btn-outline">
+                    </form>
+                    <div class="modal-action">
+                        <form method="dialog">
+                            <button class="btn btn-outline">Close</button>
+                        </form>
+                    </div>
+                </div>
+            </dialog>
+
+            <label for="my_modal_6" class="btn btn-outline">노트북 이동</label>
+            <a th:href="@{|/signup|}" class="btn btn-outline">회원가입</a>
+            <a th:href="@{|/login|}" class="btn btn-outline">로그인</a>
+            <a th:href="@{|/logout|}" class="btn btn-outline">로그아웃</a>
+            <input type="checkbox" id="my_modal_6" class="modal-toggle" />
+            <div class="modal" role="dialog">
+                <div class="modal-box h-[600px]">
+                    <div class="h-[85%]">
+                        <form th:action="@{|/books/${targetNotebook.id}/move|}" method="post">
+                            <input type="hidden" name="targetNoteId" th:value="${targetNote.id}">
+                            <ul class="menu overflow-auto">
+                                <li th:replace="main::moveTree(${notebookList},${targetNotebook})"></li>
+                            </ul>
+                            <input class="btn btn-outline" type="submit" value="이동">
+                        </form>
+                    </div>
+                    <div class="modal-action h-[15%]">
+                        <label for="my_modal_6" class="btn">Close!</label>
+                    </div>
+                </div>
+            </div>
+
         </div>
         <div class="bg-red-300 w-[20%] h-[800px] text-center ">
             <ul class="h-[100%] overflow-scroll">
@@ -63,7 +128,7 @@ th:with="notebookList=${mainDataDto.notebookList},
             </form>
         </div>
 
-        <div class="bg-green-300 w-[60%]">
+        <div class="w-[60%]">
             <form th:action="@{|/books/${targetNotebook.id}/notes/${targetNote.id}/update|}" method="post"
                   id="updateForm">
                 <div>
@@ -85,8 +150,6 @@ th:with="notebookList=${mainDataDto.notebookList},
             </form>
         </div>
     </div>
-</div>
-</body>
 <script>
     function updateForm() {
         const form = document.getElementById("updateForm");
@@ -102,4 +165,5 @@ th:with="notebookList=${mainDataDto.notebookList},
         }
     }
 </script>
+</div>
 </html>
