@@ -1,7 +1,6 @@
 package com.example.ms1.note.note;
 
 import com.example.ms1.note.notebook.Notebook;
-import com.example.ms1.note.notebook.NotebookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -38,4 +37,16 @@ public class NoteService {
         noteRepository.deleteById(id);
     }
 
+    public List<Note> getNoteList () {
+        return this.noteRepository.findAll();
+    }
+    public List<Note> getSearchedNoteList (String keyword) {
+        return this.noteRepository.findByTitleContaining(keyword);
+    }
+    public List<Note> getSortedByCreateDateNoteList (Notebook notebook) {
+      return this.noteRepository.findByNotebookOrderByCreateDateDesc(notebook);
+    }
+    public List<Note> getSortedByTitleNoteList (Notebook notebook) {
+        return this.noteRepository.findByNotebookOrderByTitleAsc(notebook);
+    }
 }

@@ -16,31 +16,42 @@ public class MainService {
     private final NotebookService notebookService;
     private final NoteService noteService;
 
-    public MainDataDto getDefaultMainData() {
+    public MainDataDto getDefaultMainData(String keyword) {
         List<Notebook> notebookList = notebookService.getTopNotebookList();
 
         if (notebookList.isEmpty()) {
             Notebook notebook = this.saveDefaultNotebook();
             notebookList.add(notebook);
         }
+        List<Notebook> searchedNotebookList = this.notebookService.getSearchedNotebookList(keyword);
+        List<Note> searchedNoteList = this.noteService.getSearchedNoteList(keyword);
 
         Notebook targetNotebook = notebookList.get(0);
         List<Note> noteList = targetNotebook.getNoteList();
         Note targetNote = noteList.get(0);
 
-        MainDataDto mainDataDto = new MainDataDto(notebookList, targetNotebook, noteList, targetNote);
+        MainDataDto mainDataDto = new MainDataDto(notebookList, targetNotebook, noteList, targetNote, searchedNotebookList, searchedNoteList);
         return mainDataDto;
     }
 
-    public MainDataDto getMainData(Long notebookId, Long noteId) {
+    public MainDataDto getMainData(Long notebookId, Long noteId, String keyword,String sort) {
 
-        MainDataDto mainDataDto = this.getDefaultMainData();
+        MainDataDto mainDataDto = this.getDefaultMainData(keyword);
         Notebook targetNotebook = this.getNotebook(notebookId);
         Note targetNote = noteService.getNote(noteId);
 
         mainDataDto.setTargetNotebook(targetNotebook);
         mainDataDto.setTargetNote(targetNote);
-        mainDataDto.setNoteList(targetNotebook.getNoteList());
+
+        List<Note> sortedNoteList;
+
+        if (sort.equals("title")) {
+            sortedNoteList = this.noteService.getSortedByTitleNoteList(targetNotebook);
+        }
+        else {
+            sortedNoteList = this.noteService.getSortedByCreateDateNoteList(targetNotebook);
+        }
+        mainDataDto.setNoteList(sortedNoteList);
 
         return mainDataDto;
     }

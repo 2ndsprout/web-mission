@@ -40,4 +40,7 @@ public class NotebookService {
 
         this.save(notebook);
     }
+    public List<Notebook> getSearchedNotebookList (String keyword) {
+        return this.notebookRepository.findByNameContaining(keyword);
+    }
 }

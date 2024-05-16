@@ -7,5 +7,7 @@ import java.util.List;
 
 public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findByNotebook(Notebook notebook);
-
+    List<Note> findByTitleContaining (String keyword);
+    List<Note> findByNotebookOrderByCreateDateDesc(Notebook notebook);
+    List<Note> findByNotebookOrderByTitleAsc(Notebook notebook);
 }

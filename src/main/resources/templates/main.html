@@ -7,7 +7,7 @@
             <summary class="flex p-0">
                 <a th:class="${basic}"
                    th:classappend="${notebook.id == targetNotebook.id} ? 'bg-blue-600':''"
-                   th:href="@{|/books/${notebook.id}|}"
+                   th:href="@{|/books/${notebook.id}?keyword=${keyword}&sort=${sort}|}"
                    th:text="${notebook.name}">
                 </a>
             </summary>
@@ -19,7 +19,7 @@
     <th:block th:if="${#lists.isEmpty(notebook.children)}">
         <a th:class="${basic}"
            th:classappend="${notebook.id == targetNotebook.id} ? 'bg-blue-600' : '' "
-           th:href="@{|/books/${notebook.id}|}" th:text="${notebook.name}"></a>
+           th:href="@{|/books/${notebook.id}?keyword=${keyword}&sort=${sort}|}" th:text="${notebook.name}"></a>
     </th:block>
 </li>
 
@@ -31,7 +31,7 @@
                 <input type="radio" class="radio radio-primary" name="destinationId" th:value="${notebook.id}">
                 <a th:class="${basic}"
                    th:classappend="${notebook.id == targetNotebook.id} ? 'bg-blue-600':''"
-                   th:href="@{|/books/${notebook.id}|}"
+                   th:href="@{|/books/${notebook.id}?keyword=${keyword}&sort=${sort}|}"
                    th:text="${notebook.name}">
                 </a>
             </summary>
@@ -45,7 +45,7 @@
             <input type="radio" class="radio radio-primary" name="destinationId" th:value="${notebook.id}">
             <a th:class="${basic}"
                th:classappend="${notebook.id == targetNotebook.id} ? 'bg-blue-600' : '' "
-               th:href="@{|/books/${notebook.id}|}" th:text="${notebook.name}">
+               th:href="@{|/books/${notebook.id}?keyword=${keyword}&sort=${sort}|}" th:text="${notebook.name}">
             </a>
         </div>
     </th:block>
@@ -55,7 +55,14 @@
      th:with="notebookList=${mainDataDto.notebookList},
         noteList=${mainDataDto.noteList},
         targetNotebook=${mainDataDto.targetNotebook},
-        targetNote=${mainDataDto.targetNote}">
+        targetNote=${mainDataDto.targetNote},
+        searchedNotebookList=${mainDataDto.searchedNotebookList},
+        searchedNoteList=${mainDataDto.searchedNoteList},
+        keyword=${paramHandler.keyword},
+        isSearchModal=${paramHandler.isSearchModal},
+        sort=${paramHandler.sort}">
+
+    <input type="hidden" name="isSearchModal" th:value="${isSearchModal}">
 
     <div class="bg-blue-300">
         <a href="/">logo</a>
@@ -68,19 +75,27 @@
             </ul>
 
             <form th:action="@{|/books/write|}" method="post">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <input type="hidden" name="sort" th:value="${sort}">
                 <input type="submit" value="추가" class="btn btn-outline">
             </form>
 
             <form th:action="@{|/groups/${targetNotebook.id}/books/write|}" method="post">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <input type="hidden" name="sort" th:value="${sort}">
                 <input type="submit" value="하위 노트북 추가" class="btn btn-outline">
             </form>
             <form th:action="@{|/books/${targetNotebook.id}/delete|}" method="post">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <input type="hidden" name="sort" th:value="${sort}">
                 <input type="submit" value="삭제" class="btn btn-outline">
             </form>
             <button class="btn btn-outline" onclick="my_modal_1.showModal()">노트북 수정</button>
             <dialog id="my_modal_1" class="modal">
                 <div class="modal-box">
                     <form th:action="@{|/books/${targetNotebook.id}/update|}" method="post" class="flex flex-col justify-center">
+                        <input type="hidden" name="keyword" th:value="${keyword}">
+                        <input type="hidden" name="sort" th:value="${sort}">
                         <input type="hidden" name="targetNoteId" th:value="${targetNote.id}">
                         <input type="text" class="input input-bordered" name="name" th:value="${targetNotebook.name}">
                         <input type="submit" value="수정" class="btn btn-outline">
@@ -88,6 +103,34 @@
                     <div class="modal-action">
                         <form method="dialog">
                             <button class="btn btn-outline">Close</button>
+                        </form>
+                    </div>
+                </div>
+            </dialog>
+
+            <button class="btn" onclick="searchModal.showModal()">검색</button>
+            <dialog id="searchModal" class="modal">
+                <div class="modal-box h-[600px]">
+                    <div>
+                        <form action="/" class="h-[10%]">
+                            <input type="hidden" name="isSearchModal" value="true">
+                            <input type="text" name="keyword" th:value="${keyword}" class="input input-bordered">
+                            <input type="submit" value="검색" class="btn btn-outline">
+                        </form>
+                        <div class="h-[80%]">
+                            <ul class="menu overflow-auto">
+                                <li th:each="notebook : ${searchedNotebookList}">
+                                    <a th:href="@{|/books/${notebook.id}?keyword=${keyword}&sort=${sort}|}" th:text="${notebook.name}"></a>
+                                </li>
+                                <li th:each="note : ${searchedNoteList}">
+                                    <a th:href="@{|/books/${note.notebook.id}/notes/${note.id}?keyword=${keyword}&sort=${sort}|}" th:text="${note.title}"></a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="modal-action h-[10%]">
+                        <form method="dialog">
+                            <button class="btn">Close</button>
                         </form>
                     </div>
                 </div>
@@ -102,6 +145,8 @@
                 <div class="modal-box h-[600px]">
                     <div class="h-[85%]">
                         <form th:action="@{|/books/${targetNotebook.id}/move|}" method="post">
+                            <input type="hidden" name="keyword" th:value="${keyword}">
+                            <input type="hidden" name="sort" th:value="${sort}">
                             <input type="hidden" name="targetNoteId" th:value="${targetNote.id}">
                             <ul class="menu overflow-auto">
                                 <li th:replace="main::moveTree(${notebookList},${targetNotebook})"></li>
@@ -119,26 +164,33 @@
         <div class="bg-red-300 w-[20%] h-[800px] text-center ">
             <ul class="h-[100%] overflow-scroll">
                 <li th:each="note : ${noteList}" th:class="${note.id == targetNote.id} ? 'bg-blue-600' : ''">
-                    <a th:href="@{|/books/${targetNotebook.id}/notes/${note.id}|}" th:text="${note.title}"></a>
+                    <a th:href="@{|/books/${targetNotebook.id}/notes/${note.id}?keyword=${keyword}&sort=${sort}|}" th:text="${note.title}"></a>
                 </li>
             </ul>
 
             <form th:action="@{|/books/${targetNotebook.id}/notes/write|}" method="post">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <input type="hidden" name="sort" th:value="${sort}">
                 <input type="submit" value="추가">
             </form>
+            <a th:href="@{|/books/${targetNotebook.id}?keyword=${keyword}&sort=date|}" class="btn btn-outline">날짜순</a>
+            <a th:href="@{|/books/${targetNotebook.id}?keyword=${keyword}&sort=title|}" class="btn btn-outline">이름순</a>
         </div>
 
         <div class="w-[60%]">
             <form th:action="@{|/books/${targetNotebook.id}/notes/${targetNote.id}/update|}" method="post"
                   id="updateForm">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <input type="hidden" name="sort" th:value="${sort}">
                 <div>
                     <input type="hidden" name="id" th:value="${targetNote.id}">
                 </div>
                 <div>
-                    <input type="text" name="title" th:value="${targetNote.title}">
+                    <input type="text" name="title" th:value="${targetNote.title}" class="input input-bordered">
                 </div>
                 <div>
-                    <textarea name="content" cols="30" rows="10" th:text="${targetNote.content}"></textarea>
+                    <input type="hidden" name="content" th:value="${targetNote.content}" id="hiddenContent">
+                    <div id="editor"></div>
                 </div>
                 <div>
                     <input type="button" value="수정" onclick="updateForm()">
@@ -146,13 +198,34 @@
             </form>
             <form th:action="@{|/books/${targetNotebook.id}/notes/${targetNote.id}/delete|}" method="post"
                   id="deleteForm">
+                <input type="hidden" name="keyword" th:value="${keyword}">
+                <input type="hidden" name="sort" th:value="${sort}">
                 <input type="button" value="삭제" onclick="deleteForm();">
             </form>
         </div>
     </div>
 <script>
+
+    const isSearchModal = document.querySelector("input[name=isSearchModal]").value;
+
+    if (isSearchModal === "true") {
+        const searchModal = document.getElementById("searchModal");
+        searchModal.showModal();
+    }
+
+
+    const editor = new toastui.Editor({
+  el: document.querySelector('#editor'),
+  height: '700px',
+  initialEditType: 'markdown',
+  previewStyle: 'vertical',
+  initialValue: document.getElementById("hiddenContent").value,
+});
+
     function updateForm() {
         const form = document.getElementById("updateForm");
+        const content = document.getElementById("hiddenContent");
+        content.value = editor.getMarkdown();
         if (confirm("수정하시겠습니까?")) {
             form.submit();
         }

@@ -22,7 +22,7 @@ public class ParamHandler {
         this.isSearchModal = false;
     }
     public String  getQueryParam () {
-        return String.format("keyword=%s&sort=%s&isSearchModal=%s".formatted(URLEncoder.encode(keyword, StandardCharsets.UTF_8), sort, isSearchModal.toString()));
+        return String.format("keyword=%s&sort=%s&isSearchModal=%s", URLEncoder.encode(keyword, StandardCharsets.UTF_8), sort, isSearchModal.toString());
     }
     public String getParamUrl (String url) {
         return url + "?" + getQueryParam();
